@@ -1,3 +1,4 @@
+import random
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -26,8 +27,6 @@ strategy = st.sidebar.selectbox(
 )
 
 # Mock Job Generation Engine
-import random
-
 random.seed(42)
 jobs = [
     {
@@ -50,33 +49,42 @@ else:
 machine_available_time = [0] * num_machines
 schedule_data = []
 
+# Base date to convert raw hours to timestamps for Plotly
+base_time = pd.Timestamp("2026-01-01 08:00:00")
+
 for job in sorted_jobs:
     # Find the machine that finishes earliest
     earliest_machine_idx = machine_available_time.index(
         min(machine_available_time)
     )
-    start_time = machine_available_time[earliest_machine_idx]
-    finish_time = start_time + job["Duration (hrs)"]
+    start_hrs = machine_available_time[earliest_machine_idx]
+    finish_hrs = start_hrs + job["Duration (hrs)"]
+
+    # Convert numeric hours to actual Datetime objects
+    start_dt = base_time + pd.Timedelta(hours=start_hrs)
+    finish_dt = base_time + pd.Timedelta(hours=finish_hrs)
 
     schedule_data.append(
         {
             "Machine": f"Machine {earliest_machine_idx + 1}",
             "Job": job["Job ID"],
-            "Start": start_time,
-            "Finish": finish_time,
-            "Duration": job["Duration (hrs)"],
+            "Start_Hrs": start_hrs,
+            "Finish_Hrs": finish_hrs,
+            "Start": start_dt,
+            "Finish": finish_dt,
+            "Duration (hrs)": job["Duration (hrs)"],
             "Priority": job["Priority"],
         }
     )
 
-    machine_available_time[earliest_machine_idx] = finish_time
+    machine_available_time[earliest_machine_idx] = finish_hrs
 
 df_schedule = pd.DataFrame(schedule_data)
 
 # Key Performance Indicators (KPIs)
 makespan = max(machine_available_time)
 avg_utilization = (
-    sum(df_schedule["Duration"]) / (makespan * num_machines)
+    sum(df_schedule["Duration (hrs)"]) / (makespan * num_machines)
 ) * 100
 bottleneck_machine = f"Machine {machine_available_time.index(makespan) + 1}"
 
@@ -95,15 +103,27 @@ fig = px.timeline(
     x_end="Finish",
     y="Machine",
     color="Job",
-    hover_data=["Priority", "Duration"],
+    hover_data=["Priority", "Duration (hrs)", "Start_Hrs", "Finish_Hrs"],
     title="Optimized Job Sequence Across Factory Machines",
 )
 fig.update_yaxes(autorange="reversed")
 fig.update_layout(
-    xaxis_title="Timeline (Hours)", yaxis_title="Work Center / Machine"
+    xaxis_title="Production Timeline", yaxis_title="Work Center / Machine"
 )
 st.plotly_chart(fig, use_container_width=True)
 
 # Machine Load Breakdown Table
 st.subheader("📋 Scheduled Work Order Breakdown")
-st.dataframe(df_schedule[["Job", "Machine", "Start", "Finish", "Duration", "Priority"]], use_container_width=True)
+st.dataframe(
+    df_schedule[
+        [
+            "Job",
+            "Machine",
+            "Start_Hrs",
+            "Finish_Hrs",
+            "Duration (hrs)",
+            "Priority",
+        ]
+    ],
+    use_container_width=True,
+)
