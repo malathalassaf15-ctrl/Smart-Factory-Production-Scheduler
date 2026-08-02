@@ -33,6 +33,27 @@ Calculating the absolute optimal schedule across multiple machines is an $NP\tex
 * **Web App Deployment:** Streamlit
 
 ---
+---
+## 🚀 How to Run Locally
+1. Clone the repository:
+```bash
+   git clone https://github.com/malathalassaf15-ctrl/Smart-Factory-Production-Scheduler.git
+```
+2. Navigate into the project folder:
+```bash
+   cd Smart-Factory-Production-Scheduler
+```
+3. Install dependencies:
+```bash
+   pip install -r requirements.txt
+```
+4. Launch the dashboard:
+```bash
+   streamlit run app.py
+```
+---
+## ⚖️ Heuristic Comparison Mode
+Beyond running a single scheduling strategy, the dashboard includes a **Compare LPT vs SPT Heuristics** tool. It runs both dispatching rules on the identical set of jobs and machines, then reports which heuristic actually produces the shorter makespan — turning an abstract scheduling choice into a concrete, measurable result.
 
 ## 📊 Live Web Application
 You can test different production parameters, switch dispatching rules, and analyze machine utilization live here:
